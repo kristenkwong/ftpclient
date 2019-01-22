@@ -16,6 +16,30 @@ public class CSftp
     static final int MAX_LEN = 255;
     static final int ARG_CNT = 2;
 
+    private static void user(String param) {
+        // merp
+    }
+
+    private static void pw(String param) {
+        // merp
+    }
+
+    private static void get(String param) {
+
+    }
+
+    private static void features() {
+        //fd
+    }
+
+    private static void cd(String param) {
+
+    }
+
+    private static void dir() {
+
+    }
+
     public static void main(String [] args)
     {
 	byte cmdString[] = new byte[MAX_LEN];
@@ -24,13 +48,14 @@ public class CSftp
 	// If the arguments are invalid or there aren't enough of them
         // then exit.
 
-	if (args.length != ARG_CNT) {
+	if (args.length > ARG_CNT || args.length == 0) {
 	    System.out.print("Usage: cmd ServerAddress ServerPort\n");
 	    return;
-    }
+    } 
     
     String hostName = args[0];
-    int portNumber = Integer.parseInt(args[1]);
+    // if no port number, default to 21
+    int portNumber = (args.length == 2) ? Integer.parseInt(args[1]) : 21;
 
 	try (
         Socket kkSocket = new Socket(hostName, portNumber);
@@ -43,14 +68,61 @@ public class CSftp
         String fromServer;
         String fromUser;
 
-        while ((fromServer = in.readLine()) != null) {
-            System.out.println("--> " + fromServer);
+        while (true) {
+
+            /*fromServer = in.readLine();
+            if (fromServer != null) {
+                System.out.println("--> " + fromServer);
+                if (fromServer.startsWith("221"))
+                    break;
+            }*/
 
             System.out.print("csftp> ");
+
             fromUser = stdIn.readLine();
-            if (fromUser != null) {
-                System.out.println("<-- " + fromUser);
-                out.println(fromUser);
+            if (fromUser.equals("") || fromUser.startsWith("#"))
+                continue;
+
+            else if (fromUser != null) {
+                System.out.println("--> " + fromUser);
+                String[] commands = fromUser.split(" ");
+
+                String param = null;
+                if (commands[0].equals("user") || commands[0].equals("pw")
+                || commands[0].equals("get") || commands[0].equals("cd")) {
+                    // do something with params
+                    // check arg number
+                    // TODO
+                    param = commands[1];
+                }
+
+                switch(commands[0]) {
+                    case "user":
+                        user(param);
+                        // out.print()
+                        break;
+                    case "pw":
+                        pw(param);
+                        break;
+                    case "quit":
+                        out.println("quit");
+                        break;
+                    case "get":
+                        get(param);
+                        break;
+                    case "features":
+                        features();
+                        break;
+                    case "cd":
+                        cd(param);
+                        break;
+                    case "dir":
+                        dir();
+                        break;
+                    default:
+                        System.out.println("invalid command");
+                        break;
+                }
             }
         }
 
