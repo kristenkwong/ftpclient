@@ -145,11 +145,10 @@ public class CSftp {
                 else {
                     // System.out.println("--> " + fromUser);
                     String[] commands = command.split(" ");
-
                     String param = null;
 
-                    if (command.equals("user") || command.equals("pw") || command.equals("get")
-                            || command.equals("cd")) {
+                    if (commands[0].equals("user") || commands[0].equals("pw") || commands[0].equals("get")
+                            || commands[0].equals("cd")) {
                         // Check that the number of arguments is correct
                         if (commands.length == 2) {
                             param = commands[1];
