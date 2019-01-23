@@ -147,53 +147,41 @@ public class CSftp {
                     String[] commands = command.split(" ");
 
                     String param = null;
-                    
+
+                    if (command.equals("user") || command.equals("pw") || command.equals("get")
+                            || command.equals("cd")) {
+                        // Check that the number of arguments is correct
+                        if (commands.length == 2) {
+                            param = commands[1];
+                        } else {
+                            System.out.println("0x002 Incorrect number of arguments.");
+                            continue;
+                        }
+                    } else {
+                        if (commands.length != 1){
+                            System.out.println("0x002 Incorrect number of arguments.");
+                            continue;
+                        }
+                    }
+
                     switch(commands[0]) {
                         case "user":
-                            if (commands.length != 2) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             user(param); break;
                         case "pw":
-                            if (commands.length != 2) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             pw(param); break;
                         case "quit":
-                            if (commands.length != 1) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             quit();
                             break;
                         case "get":
-                            if (commands.length != 2) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             get(param);
                             break;
                         case "features":
-                            if (commands.length != 1) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             features();
                             break;
                         case "cd":
-                            if (commands.length != 2) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             cd(param);
                             break;
                         case "dir":
-                            if (commands.length != 1) {
-                                System.err.println("0x002 Incorrect number of arguments.");
-                                break;
-                            }
                             dir();
                             break;
                         default:
