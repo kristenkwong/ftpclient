@@ -37,7 +37,6 @@ public class CSftp {
     }
 
     private static void get(String param) {
-
         /* open a new data connection */
         try (
             Socket kkSocket = new Socket(hostName, portNumber);
@@ -48,7 +47,8 @@ public class CSftp {
             BufferedReader stdIn =
                 new BufferedReader(new InputStreamReader(System.in));
             String fromServer;
-            String fromUser;
+
+            
         } catch (UnknownHostException e) {
             System.err.println("Don't know about host " + hostName);
             System.exit(1);
@@ -115,8 +115,20 @@ public class CSftp {
             } else {
                 // response is single line
                 System.out.println("<-- " + fromServer);
-                if (fromServer.startsWith("221")) // connection closed
+                if (fromServer.startsWith("221")) {
+                    // connection closed
                     System.exit(0);
+                } else if (fromServer.startsWith("227")) {
+                    // entering passive mode 
+                    int hostStart = fromServer.indexOf("(");
+                    int hostEnd = fromServer.indexOf(")");
+                    String hostString = fromServer.substring(hostStart + 1, hostEnd);
+                    String[] hostNumbers = hostString.split(",");
+                    String ipAddress = hostNumbers[0] + "." + hostNumbers[1] + "." + hostNumbers[2] + "." + hostNumbers[3];
+                    int portNumber = Integer.parseInt(hostNumbers[4]) * 256 + Integer.parseInt(hostNumbers[5]);
+                    // System.out.println(ipAddress);
+                    // System.out.println(portNumber);
+                }
             }
             
         } catch (IOException exception) {
