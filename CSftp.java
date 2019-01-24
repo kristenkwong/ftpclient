@@ -37,7 +37,45 @@ public class CSftp {
     }
 
     private static void get(String param) {
-        
+        sendCommand("PASV");
+        String[] hostNumbers = handlePassiveResponse();
+        if (hostNumbers == null)
+            return;
+        String hostName = getIpAddress(hostNumbers);
+        int portNumber = getPortNumber(hostNumbers);
+        String[] splitParam = param.split("/"); 
+        String fileName;
+        if (splitParam.length == 1) {
+            fileName = splitParam[0];
+        } else {
+            fileName = splitParam[splitParam.length - 1];
+        }
+        try (
+            Socket kkSocket = new Socket(hostName, portNumber);
+            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(kkSocket.getInputStream()));
+        ) {
+            BufferedReader stdIn =
+                new BufferedReader(new InputStreamReader(System.in));
+            String fromServer;
+
+            sendCommand("RETR " + param);
+            handleResponse();
+
+            while ((fromServer = in.readLine()) != null) {
+                System.out.println("<-- " + fromServer);
+            }
+            
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host " + hostName);
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Couldn't get I/O for the connection to " +
+                hostName);
+            System.exit(1);
+        }
+        handleResponse();
     }
 
     private static void features() {
