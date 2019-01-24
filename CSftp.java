@@ -38,7 +38,7 @@ public class CSftp {
 
     private static void get(String param) {
         sendCommand("PASV");
-        handleResponse();
+        handlePassiveResponse();
     }
 
     private static void features() {
@@ -64,6 +64,38 @@ public class CSftp {
             System.err.println(String.format("0xFFFC Control connection to %s on port %i failed to open.", hostName, portNumber));
         }
         return;
+    }
+
+    private static String getIpAddress(String[] hostNumbers) {
+        return hostNumbers[0] + "." + hostNumbers[1] + "." + hostNumbers[2] + "." + hostNumbers[3];
+    }
+
+    private static int getPortNumber(String[] hostNumbers) {
+        return Integer.parseInt(hostNumbers[4]) * 256 + Integer.parseInt(hostNumbers[5]);
+    }
+
+    private static void handlePassiveResponse() {
+        try {
+            String fromServer;
+            fromServer = in.readLine();
+
+            if (fromServer.startsWith("227")) {
+                // entering passive mode 
+                int hostStart = fromServer.indexOf("(");
+                int hostEnd = fromServer.indexOf(")");
+                String hostString = fromServer.substring(hostStart + 1, hostEnd);
+                String[] hostNumbers = hostString.split(",");
+                String ipAddress = getIpAddress(hostNumbers);
+                int portNumber = getPortNumber(hostNumbers);
+                System.out.println(ipAddress);
+                System.out.println(portNumber);
+            } else {
+                // TODO: better error handling
+                throw new Exception();
+            }
+        } catch (Exception e) {
+            System.err.println("error handling response");
+        }
     }
 
     private static void handleResponse() {
