@@ -43,7 +43,13 @@ public class CSftp {
             return;
         String hostName = getIpAddress(hostNumbers);
         int portNumber = getPortNumber(hostNumbers);
-
+        String[] splitParam = param.split("/"); 
+        String fileName;
+        if (splitParam.length == 1) {
+            fileName = splitParam[0];
+        } else {
+            fileName = splitParam[splitParam.length - 1];
+        }
         try (
             Socket kkSocket = new Socket(hostName, portNumber);
             PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
