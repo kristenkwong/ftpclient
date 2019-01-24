@@ -59,19 +59,16 @@ public class CSftp {
         int portNumber = getPortNumber(hostNumbers);
 
         try (
-            Socket kkSocket = new Socket(hostName, portNumber);
-            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(kkSocket.getInputStream()));
+            Socket dataSocket = new Socket(hostName, portNumber);
+            BufferedReader dataIn = new BufferedReader(
+                new InputStreamReader(dataSocket.getInputStream()));
         ) {
-            BufferedReader stdIn =
-                new BufferedReader(new InputStreamReader(System.in));
             String fromServer;
 
             sendCommand("LIST");
             handleResponse();
 
-            while ((fromServer = in.readLine()) != null) {
+            while ((fromServer = dataIn.readLine()) != null) {
                 System.out.println("<-- " + fromServer);
             }
             
