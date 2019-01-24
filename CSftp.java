@@ -59,6 +59,8 @@ public class CSftp {
         ) {
             String fromServer;
 
+            sendCommand("TYPE I");
+            handleResponse();
             sendCommand("RETR " + param);
             handleResponse();
 
@@ -200,16 +202,6 @@ public class CSftp {
                 if (fromServer.startsWith("221")) {
                     // connection closed
                     System.exit(0);
-                } else if (fromServer.startsWith("227")) {
-                    // entering passive mode 
-                    int hostStart = fromServer.indexOf("(");
-                    int hostEnd = fromServer.indexOf(")");
-                    String hostString = fromServer.substring(hostStart + 1, hostEnd);
-                    String[] hostNumbers = hostString.split(",");
-                    String ipAddress = hostNumbers[0] + "." + hostNumbers[1] + "." + hostNumbers[2] + "." + hostNumbers[3];
-                    int portNumber = Integer.parseInt(hostNumbers[4]) * 256 + Integer.parseInt(hostNumbers[5]);
-                    // System.out.println(ipAddress);
-                    // System.out.println(portNumber);
                 }
             }
             
