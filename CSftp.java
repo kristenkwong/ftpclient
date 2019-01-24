@@ -137,7 +137,7 @@ public class CSftp {
                 System.out.print("csftp> ");
                 len = System.in.read(cmdString);
                 String command = new String(cmdString).trim();
-                
+
                 cmdString = new byte[MAX_LEN]; // clear byte array after command copied
 
                 // if empty string or starts with #, silently ignore and display prompt
@@ -149,20 +149,25 @@ public class CSftp {
                     String param = null;
                     System.out.println(command);
 
-                    if (commands[0].equals("user") || commands[0].equals("pw") || commands[0].equals("get")
-                            || commands[0].equals("cd")) {
-                        // Check that the number of arguments is correct
-                        if (commands.length == 2) {
-                            param = commands[1];
-                        } else {
-                            System.out.println("0x002 Incorrect number of arguments.");
-                            continue;
-                        }
-                    } else {
-                        if (commands.length != 1){
-                            System.out.println("0x002 Incorrect number of arguments.");
-                            continue;
-                        }
+                    switch(commands[0]) {
+                        case "user": case "pw": case "get": case "cd":
+                            // Check that the number of arguments is correct
+                            if (commands.length == 2) {
+                                param = commands[1];
+                            } else {
+                                System.out.println("0x002 Incorrect number of arguments.");
+                                continue;
+                            }
+                            break;
+                        case "quit": case "features": case "dir":
+                            if (commands.length != 1){
+                                System.out.println("0x002 Incorrect number of arguments.");
+                                continue;
+                            }
+                            break;
+                        default:
+                            System.out.println("900 Invalid command.");
+                            break;
                     }
 
                     switch(commands[0]) {
