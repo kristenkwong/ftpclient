@@ -137,16 +137,17 @@ public class CSftp {
                 System.out.print("csftp> ");
                 len = System.in.read(cmdString);
                 String command = new String(cmdString).trim();
+                
+                cmdString = new byte[MAX_LEN]; // clear byte array after command copied
 
                 // if empty string or starts with #, silently ignore and display prompt
                 if (len <= 0 || command.equals("") || command.startsWith("#"))
                     continue;
             
                 else {
-                    // System.out.println("--> " + fromUser);
                     String[] commands = command.split(" ");
-
                     String param = null;
+                    System.out.println(command);
 
                     if (command.equals("user") || command.equals("pw") || command.equals("get")
                             || command.equals("cd")) {
@@ -188,8 +189,6 @@ public class CSftp {
                             System.out.println("900 Invalid command.");
                             break;
                     }
-
-                    cmdString = new byte[MAX_LEN]; // clear byte array after cmd
                 }
             }
         } catch (IOException exception) {
