@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 
 //
 // This is an implementation of a simplified version of a command 
@@ -50,22 +51,23 @@ public class CSftp {
         } else {
             fileName = splitParam[splitParam.length - 1];
         }
+        System.out.println(fileName);
         try (
-            Socket kkSocket = new Socket(hostName, portNumber);
-            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(kkSocket.getInputStream()));
+            Socket dataSocket = new Socket(hostName, portNumber);
+            BufferedReader dataIn = new BufferedReader(
+                new InputStreamReader(dataSocket.getInputStream()));
         ) {
-            BufferedReader stdIn =
-                new BufferedReader(new InputStreamReader(System.in));
             String fromServer;
 
             sendCommand("RETR " + param);
             handleResponse();
 
-            while ((fromServer = in.readLine()) != null) {
+            PrintWriter file = new PrintWriter(fileName, StandardCharsets.UTF_8);
+            while ((fromServer = dataIn.readLine()) != null) {
                 System.out.println("<-- " + fromServer);
+                file.println(fromServer);
             }
+            file.close();
             
         } catch (UnknownHostException e) {
             System.err.println("Don't know about host " + hostName);
