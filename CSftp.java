@@ -38,6 +38,15 @@ public class CSftp {
 
     private static void get(String param) {
         /* open a new data connection */
+        sendCommand("PASV");
+        String[] hostNumbers = handlePassiveResponse();
+        if (hostNumbers == null)
+            return;
+        String hostName = getIpAddress(hostNumbers);
+        int portNumber = getPortNumber(hostNumbers);
+        System.out.println(hostName);
+        System.out.println(portNumber);
+
         try (
             Socket kkSocket = new Socket(hostName, portNumber);
             PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
@@ -83,6 +92,38 @@ public class CSftp {
             System.err.println(String.format("0xFFFC Control connection to %s on port %i failed to open.", hostName, portNumber));
         }
         return;
+    }
+
+    private static String getIpAddress(String[] hostNumbers) {
+        return hostNumbers[0] + "." + hostNumbers[1] + "." + hostNumbers[2] + "." + hostNumbers[3];
+    }
+
+    private static int getPortNumber(String[] hostNumbers) {
+        return Integer.parseInt(hostNumbers[4]) * 256 + Integer.parseInt(hostNumbers[5]);
+    }
+
+    private static String[] handlePassiveResponse() {
+        String[] hostNumbers;
+        try {
+            String fromServer;
+            fromServer = in.readLine();
+            System.out.println("<-- " + fromServer);
+
+            if (fromServer.startsWith("227")) {
+                // entering passive mode 
+                int hostStart = fromServer.indexOf("(");
+                int hostEnd = fromServer.indexOf(")");
+                String hostString = fromServer.substring(hostStart + 1, hostEnd);
+                hostNumbers = hostString.split(",");
+                return hostNumbers;
+            } else {
+                return null; // error with passive response
+            }
+        } catch (IOException e) {
+            System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
+            return null;
+        }
+
     }
 
     private static void handleResponse() {
