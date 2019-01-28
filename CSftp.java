@@ -57,12 +57,18 @@ public class CSftp {
             BufferedReader dataIn = new BufferedReader(
                 new InputStreamReader(dataSocket.getInputStream()));
         ) {
+            dataSocket.setSoTimeout(10*1000);
             String fromServer;
+            String response;
 
             sendCommand("TYPE I");
-            handleResponse();
+            response = handleResponse();
             sendCommand("RETR " + param);
-            handleResponse();
+            response = handleResponse();
+            if (response != "150") {
+                System.err.println(String.format("0x38E Access to local file %s denied.", param));
+                return;
+            }
 
             PrintWriter file = new PrintWriter(fileName, StandardCharsets.UTF_8);
             while ((fromServer = dataIn.readLine()) != null) {
@@ -71,12 +77,14 @@ public class CSftp {
             }
             file.close();
             
+        } catch (SocketTimeoutException e) {
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.exit(1);
         } catch (UnknownHostException e) {
-            System.err.println("Don't know about host " + hostName);
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
             System.exit(1);
         } catch (IOException e) {
-            System.err.println("Couldn't get I/O for the connection to " +
-                hostName);
+            System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
         }
         handleResponse();
@@ -95,8 +103,9 @@ public class CSftp {
     private static void dir() {
         sendCommand("PASV");
         String[] hostNumbers = handlePassiveResponse();
-        if (hostNumbers == null)
+        if (hostNumbers == null) {
             return;
+        }
         String hostName = getIpAddress(hostNumbers);
         int portNumber = getPortNumber(hostNumbers);
 
@@ -106,23 +115,24 @@ public class CSftp {
                 new InputStreamReader(dataSocket.getInputStream()));
         ) {
             String fromServer;
-
+            dataSocket.setSoTimeout(20*1000);
             sendCommand("LIST");
             handleResponse();
 
             while ((fromServer = dataIn.readLine()) != null) {
                 System.out.println("<-- " + fromServer);
             }
+
+            handleResponse();
             
+        } catch (SocketTimeoutException e) {
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
         } catch (UnknownHostException e) {
-            System.err.println("Don't know about host " + hostName);
-            System.exit(1);
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
         } catch (IOException e) {
-            System.err.println("Couldn't get I/O for the connection to " +
-                hostName);
+            System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
         }
-        handleResponse();
     }
 
     private static void establishControlConnection(String hostName, int portNumber) {
@@ -133,7 +143,8 @@ public class CSftp {
             handleResponse();
         } catch (IOException exception) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %i failed to open.", hostName, portNumber));
-        }
+            System.exit(1);
+        } 
         return;
     }
 
@@ -160,7 +171,7 @@ public class CSftp {
                 hostNumbers = hostString.split(",");
                 return hostNumbers;
             } else {
-                return null; // error with passive response
+                return null;
             }
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
@@ -169,7 +180,7 @@ public class CSftp {
 
     }
 
-    private static void handleResponse() {
+    private static String handleResponse() {
         try {
             String fromServer;
             fromServer = in.readLine();
@@ -193,8 +204,9 @@ public class CSftp {
                     fromServer = in.readLine();
                     line_num++;
                 }
-                if (exit_flag) // if the program has been flagged to exit
+                if (exit_flag) { // if the program has been flagged to exit
                     System.exit(0);
+                }
 
             } else {
                 // response is single line
@@ -204,9 +216,12 @@ public class CSftp {
                     System.exit(0);
                 }
             }
+
+            return responseCode;
             
         } catch (IOException exception) {
-            System.err.println("error handling response");
+            System.err.println("0xFFFD Control connection I/O error, closing control connection.");
+            return "IOError";
         } 
     }
 
@@ -273,7 +288,7 @@ public class CSftp {
                             }
                             break;
                         default:
-                            System.out.println("900 Invalid command.");
+                            System.out.println("0x001 Invalid command.");
                             break;
                     }
 
@@ -298,13 +313,13 @@ public class CSftp {
                             dir();
                             break;
                         default:
-                            System.out.println("900 Invalid command.");
+                            System.out.println("0x001 Invalid command.");
                             break;
                     }
                 }
             }
         } catch (IOException exception) {
-            System.err.println("998 Input error while reading commands, terminating.");
+            System.err.println("0xFFFE Input error while reading commands, terminating.");
         }
     }
 }
