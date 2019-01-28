@@ -148,19 +148,21 @@ public class CSftp {
 
     private static void establishControlConnection(String hostName, int portNumber) {
         try {
-            socket = new Socket(hostName, portNumber);
-            socket.setSoTimeout(20*1000);
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(hostName, portNumber), 20*1000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String fromServer;
-            fromServer = in.readLine();
-            System.out.println("<-- " + fromServer);
+            handleResponse();
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
+            System.exit(1);
+        } catch (UnknownHostException e) {
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
+            System.exit(1);
         } catch (IOException exception) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
-        } 
+        }
         return;
     }
 
@@ -173,6 +175,7 @@ public class CSftp {
     }
 
     private static String[] handlePassiveResponse() {
+        // Returns host numbers if a Passive mode connection is established
         String[] hostNumbers;
         try {
             String fromServer;
@@ -221,6 +224,7 @@ public class CSftp {
                     line_num++;
                 }
                 if (exit_flag) { // if the program has been flagged to exit
+                    socket.close();
                     System.exit(0);
                 }
 
@@ -229,6 +233,7 @@ public class CSftp {
                 System.out.println("<-- " + fromServer);
                 if (fromServer.startsWith("221")) {
                     // connection closed
+                    socket.close();
                     System.exit(0);
                 }
             }
