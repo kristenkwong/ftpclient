@@ -23,20 +23,20 @@ public class CSftp {
     /**
      * Sends the FTP command 'USER' to the server with param and handle response from server.
      * 
-     * @param param the username to send to the server
+     * @param username the username to send to the server
      */
-    private static void user(String param) {
-        sendCommand("USER " + param);
+    private static void user(String username) {
+        sendCommand("USER " + username);
         handleResponse();
     }
 
     /**
      * Sends the FTP command 'PASS' to the server with param and handle response from server.
      * 
-     * @param param the password to send to the server
+     * @param password the password to send to the server
      */
-    private static void pw(String param) {
-        sendCommand("PASS " + param);
+    private static void pw(String password) {
+        sendCommand("PASS " + password);
         handleResponse();
     }
 
@@ -53,11 +53,11 @@ public class CSftp {
     /**
      * Get the name of a file, given the entire file name and extension. 
      * 
-     * @param param Full filefile, including extension
+     * @param filename Full filefile, including extension
      * @return The filename of param
      */
-    private static String getFilename(String param) {
-        String[] splitParam = param.split("/"); 
+    private static String getFilename(String filename) {
+        String[] splitParam = filename.split("/");
         String fileName;
         if (splitParam.length == 1) {
             fileName = splitParam[0];
