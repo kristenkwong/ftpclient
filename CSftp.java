@@ -243,7 +243,7 @@ public class CSftp {
             
         } catch (IOException exception) {
             System.err.println("0xFFFD Control connection I/O error, closing control connection.");
-            return "IOError";
+            return null;
         } 
     }
 
