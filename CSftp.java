@@ -224,6 +224,7 @@ public class CSftp {
                     line_num++;
                 }
                 if (exit_flag) { // if the program has been flagged to exit
+                    // exit after all lines have been printed
                     socket.close();
                     System.exit(0);
                 }
@@ -319,20 +320,15 @@ public class CSftp {
                         case "pw":
                             pw(param); break;
                         case "quit":
-                            quit();
-                            break;
+                            quit(); break;
                         case "get":
-                            get(param);
-                            break;
+                            get(param); break;
                         case "features":
-                            features();
-                            break;
+                            features(); break;
                         case "cd":
-                            cd(param);
-                            break;
+                            cd(param); break;
                         case "dir":
-                            dir();
-                            break;
+                            dir(); break;
                         default:
                             break;
                     }
