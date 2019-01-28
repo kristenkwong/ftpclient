@@ -78,10 +78,10 @@ public class CSftp {
             file.close();
             
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
@@ -126,9 +126,9 @@ public class CSftp {
             handleResponse();
             
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
@@ -137,14 +137,21 @@ public class CSftp {
 
     private static void establishControlConnection(String hostName, int portNumber) {
         try {
-            socket = new Socket(hostName, portNumber);
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(hostName, portNumber), 20*1000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             handleResponse();
-        } catch (IOException exception) {
-            System.err.println(String.format("0xFFFC Control connection to %s on port %i failed to open.", hostName, portNumber));
+        } catch (SocketTimeoutException e) {
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
-        } 
+        } catch (UnknownHostException e) {
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
+            System.exit(1);
+        } catch (IOException exception) {
+            System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
+            System.exit(1);
+        }
         return;
     }
 
