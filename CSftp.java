@@ -11,32 +11,51 @@ import java.nio.charset.StandardCharsets;
 // line ftp client. The program always takes two arguments
 //
 
-
 public class CSftp {
-
-    static final int MAX_LEN = 255;
-    static final int ARG_CNT = 2;
+    private static final int MAX_LEN = 255;
+    private static final int ARG_CNT = 2;
     private static final int FTP_PORT = 21;
 
-    static Socket socket;
-    static PrintWriter out;
-    static BufferedReader in;
+    private static Socket socket;
+    private static PrintWriter out;
+    private static BufferedReader in;
 
+    /**
+     * Sends the FTP command 'USER' to the server with param and handle response from server.
+     * 
+     * @param param the username to send to the server
+     */
     private static void user(String param) {
         sendCommand("USER " + param);
         handleResponse();
     }
 
+    /**
+     * Sends the FTP command 'PASS' to the server with param and handle response from server.
+     * 
+     * @param param the password to send to the server
+     */
     private static void pw(String param) {
         sendCommand("PASS " + param);
         handleResponse();
     }
 
+    /**
+     * Sends the FTP command 'QUIT' to the server.
+     * 
+     * Closes command with the server and terminates the program.
+     */
     private static void quit() {
         sendCommand("QUIT");
         handleResponse();
     }
 
+    /**
+     * Get the name of a file, given the entire file name and extension. 
+     * 
+     * @param param Full filefile, including extension
+     * @return The filename of param
+     */
     private static String getFilename(String param) {
         String[] splitParam = param.split("/"); 
         String fileName;
@@ -48,18 +67,25 @@ public class CSftp {
         return fileName;
     }
 
-    private static void get(String param) {
+    /**
+     * Sends the FTP command 'PASV' and 'RETR' to the server. 
+     * 
+     * Establishes a data connection and retrieves the file indicated by remote and saves
+     * it locally.
+     * @param remote The path of the file to retrieve.  
+     */
+    private static void get(String remote) {
         sendCommand("PASV");
         String[] hostNumbers = handlePassiveResponse();
         if (hostNumbers == null)
             return;
         String hostName = getIpAddress(hostNumbers);
         int portNumber = getPortNumber(hostNumbers);
-        String fileName = getFilename(param);
+        String fileName = getFilename(remote);
 
         Socket dataSocket = null;
-        InputStream dataIn = null;
-        BufferedOutputStream dataOut = null;
+        InputStream dataIn;
+        BufferedOutputStream dataOut;
 
         try {
             dataSocket = new Socket();
@@ -69,16 +95,13 @@ public class CSftp {
             sendCommand("TYPE I"); // change to binary mode
             handleResponse();
 
-            sendCommand("RETR " + param);
+            sendCommand("RETR " + remote);
             String response = handleResponse();
             if (!response.equals("150")) {
                 dataSocket.close();
                 return;
             }
-        } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
-            return;
-        } catch (UnknownHostException e) {
+        } catch (SocketTimeoutException | UnknownHostException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             return;
         } catch (IOException e) {
@@ -113,16 +136,29 @@ public class CSftp {
         handleResponse();
     }
 
+    /**
+     * Sends the FTP command 'FEAT' to the server.
+     */
     private static void features() {
         sendCommand("FEAT");
         handleResponse();
     }
 
-    private static void cd(String param) {
-        sendCommand("CWD " + param);
+    /**
+     * Sends the FTP command 'CWD' to the server.
+     * 
+     * @param directory Changes the current working directory on the server to the directory indicated by directory. 
+     */
+    private static void cd(String directory) {
+        sendCommand("CWD " + directory);
         handleResponse();
     }
 
+    /**
+     * Sends the FTP command 'PASV' and 'LIST' to the server.
+     * 
+     * Establishes a data connection and retrieves a list of files in the current working directory on the server. The list is printed  to standard output.
+     */
     private static void dir() {
         sendCommand("PASV");
         String[] hostNumbers = handlePassiveResponse();
@@ -150,18 +186,25 @@ public class CSftp {
             handleResponse(); // handle response on Control Connection (2nd)
             dataSocket.close();
             
-        } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
-        } catch (UnknownHostException e) {
+        } catch (SocketTimeoutException | UnknownHostException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
         } catch (Exception e) {
             System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            System.exit(1);
         }
     }
 
+    /**
+     * Opens a socket for a control connection with a timeout of 20 seconds.
+     * 
+     * Opens a control connection from given hostName and portNumber. Initializes writers and readers to send commands to and receive responses from.
+     * 
+     * @param hostName The host address to connect to.
+     * @param portNumber The port number to connect to.
+     */
     private static void establishControlConnection(String hostName, int portNumber) {
         try {
             socket = new Socket();
@@ -169,10 +212,7 @@ public class CSftp {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             handleResponse();
-        } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
-            System.exit(1);
-        } catch (UnknownHostException e) {
+        } catch (SocketTimeoutException | UnknownHostException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
         } catch (IOException exception) {
@@ -180,20 +220,36 @@ public class CSftp {
             System.exit(1);
         } catch (Exception e) {
             System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            System.exit(1);
         }
-        return;
     }
 
+    /**
+     * Returns an IP address.
+     * 
+     * @param hostNumbers The string array representing the IP address numbers and port number.
+     * @return The IP address.
+     */
     private static String getIpAddress(String[] hostNumbers) {
         return hostNumbers[0] + "." + hostNumbers[1] + "." + hostNumbers[2] + "." + hostNumbers[3];
     }
 
+    /**
+     * Returns a port number.
+     * 
+     * @param hostNumbers The string array representing the IP address numbers and port number.
+     * @return The port number.
+     */
     private static int getPortNumber(String[] hostNumbers) {
         return Integer.parseInt(hostNumbers[4]) * 256 + Integer.parseInt(hostNumbers[5]);
     }
 
+    /**
+     * Returns host numbers if a PASSIVE MODE connection is established.
+     * 
+     * @return The string array representing the host numbers.
+     */
     private static String[] handlePassiveResponse() {
-        // Returns host numbers if a Passive mode connection is established
         String[] hostNumbers;
         try {
             String fromServer;
@@ -215,11 +271,17 @@ public class CSftp {
             return null;
         } catch (Exception e) {
             System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            System.exit(1);
             return null;
         }
 
     }
 
+    /**
+     * Handles the response from the server. Returns response code.
+     *
+     * @return The response code.
+     */
     private static String handleResponse() {
         try {
             String fromServer;
@@ -267,17 +329,23 @@ public class CSftp {
             return "IOError";
         } catch (Exception e) {
             System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            System.exit(1);
             return "Processing Error";
         }
     }
 
+    /**
+     * Sends a command to the FTP server.
+     *
+     * @param command The command to send to the server.
+     */
     private static void sendCommand(String command) {
         out.println(command + "\r\n");
         System.out.println("--> " + command);
     }
 
     public static void main(String [] args) {
-        byte cmdString[] = new byte[MAX_LEN];
+        byte[] cmdString = new byte[MAX_LEN];
 
         // Get command line arguments and connected to FTP
         // If the arguments are invalid or there aren't enough of them
@@ -294,7 +362,7 @@ public class CSftp {
             portNumber = (args.length == 2) ? Integer.parseInt(args[1]) : FTP_PORT;
         } catch (NumberFormatException error) {
             System.out.println("0xFFFF Processing error. Port number isn't a number.");
-            System.exit(0);
+            System.exit(1);
         }
         
         try {
@@ -361,6 +429,7 @@ public class CSftp {
             System.err.println("0xFFFE Input error while reading commands, terminating.");
         } catch (Exception e) {
             System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            System.exit(1);
         }
     }
 }
