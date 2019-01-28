@@ -58,14 +58,16 @@ public class CSftp {
         String fileName = getFilename(param);
 
         Socket dataSocket = null;
-        BufferedReader dataIn = null;
-        String fromServer;
+        InputStream dataIn = null;
+        BufferedOutputStream dataOut = null;
 
         try {
             dataSocket = new Socket();
             dataSocket.connect(new InetSocketAddress(hostName, portNumber), 10*1000);
-            dataIn = new BufferedReader(
-                new InputStreamReader(dataSocket.getInputStream()));
+            dataIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+
+            sendCommand("TYPE I"); // change to binary mode
+            handleResponse();
 
             sendCommand("RETR " + param);
             String response = handleResponse();
@@ -74,10 +76,10 @@ public class CSftp {
                 return;
             }
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             return;
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             return;
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
@@ -85,16 +87,28 @@ public class CSftp {
         }
 
         try {
-            PrintWriter file = new PrintWriter(fileName, StandardCharsets.UTF_8);
-            while ((fromServer = dataIn.readLine()) != null) {
-                System.out.println("<-- " + fromServer);
-                file.println(fromServer);
+            // Get bytes from data connection stream, write to file
+            int curr_byte;
+            dataIn = dataSocket.getInputStream();
+            File file = new File(fileName);
+            file.createNewFile();
+            dataOut = new BufferedOutputStream(new FileOutputStream(file));
+            byte[] buffer = new byte[4096];
+
+            while ((curr_byte = dataIn.read(buffer, 0, buffer.length)) > 0) {
+                String bufString = new String(buffer);
+                System.out.println("<-- " + bufString);
+                dataOut.write(buffer, 0, curr_byte);
             }
-            file.close();
+
+            dataIn.close();
+            dataOut.close();
             dataSocket.close();
         } catch (IOException e) {
             System.err.println(String.format("0x38E Access to local file %s denied.", fileName));
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
         handleResponse();
     }
@@ -137,12 +151,14 @@ public class CSftp {
             dataSocket.close();
             
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
     }
 
@@ -162,6 +178,8 @@ public class CSftp {
         } catch (IOException exception) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
         return;
     }
@@ -194,6 +212,9 @@ public class CSftp {
             }
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
+            return null;
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
             return null;
         }
 
@@ -243,8 +264,11 @@ public class CSftp {
             
         } catch (IOException exception) {
             System.err.println("0xFFFD Control connection I/O error, closing control connection.");
-            return null;
-        } 
+            return "IOError";
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            return "Processing Error";
+        }
     }
 
     private static void sendCommand(String command) {
@@ -291,7 +315,6 @@ public class CSftp {
                 else {
                     String[] commands = command.split(" ");
                     String param = null;
-                    System.out.println(command);
 
                     switch(commands[0]) {
                         case "user": case "pw": case "get": case "cd":
@@ -336,6 +359,8 @@ public class CSftp {
             }
         } catch (IOException exception) {
             System.err.println("0xFFFE Input error while reading commands, terminating.");
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
     }
 }
