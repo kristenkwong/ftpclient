@@ -52,12 +52,11 @@ public class CSftp {
             fileName = splitParam[splitParam.length - 1];
         }
         System.out.println(fileName);
-        try (
-            Socket dataSocket = new Socket(hostName, portNumber);
+        try {
+            Socket dataSocket = new Socket();
+            dataSocket.connect(new InetSocketAddress(hostName, portNumber), 10*1000);
             BufferedReader dataIn = new BufferedReader(
                 new InputStreamReader(dataSocket.getInputStream()));
-        ) {
-            dataSocket.setSoTimeout(10*1000);
             String fromServer;
             String response;
 
@@ -65,8 +64,9 @@ public class CSftp {
             response = handleResponse();
             sendCommand("RETR " + param);
             response = handleResponse();
-            if (response != "150") {
+            if (!response.equals("150")) {
                 System.err.println(String.format("0x38E Access to local file %s denied.", param));
+                dataSocket.close();
                 return;
             }
 
@@ -76,6 +76,7 @@ public class CSftp {
                 file.println(fromServer);
             }
             file.close();
+            dataSocket.close();
             
         } catch (SocketTimeoutException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
@@ -320,7 +321,6 @@ public class CSftp {
                             dir();
                             break;
                         default:
-                            System.out.println("0x001 Invalid command.");
                             break;
                     }
                 }
