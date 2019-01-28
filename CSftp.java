@@ -119,8 +119,8 @@ public class CSftp {
             byte[] buffer = new byte[4096];
 
             while ((curr_byte = dataIn.read(buffer, 0, buffer.length)) > 0) {
-                String bufString = new String(buffer);
-                System.out.println("<-- " + bufString);
+                // String bufString = new String(buffer);
+                // System.out.println(bufString);
                 dataOut.write(buffer, 0, curr_byte);
             }
 
@@ -180,7 +180,7 @@ public class CSftp {
 
             // read from Data Connection:
             while ((fromServer = dataIn.readLine()) != null) {
-                System.out.println("<-- " + fromServer);
+                System.out.println(fromServer);
             }
 
             handleResponse(); // handle response on Control Connection (2nd)
@@ -211,7 +211,11 @@ public class CSftp {
             socket.connect(new InetSocketAddress(hostName, portNumber), 20*1000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            handleResponse();
+            String response = handleResponse();
+            if (!response.startsWith("220")) {
+                System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
+                System.exit(1);
+            }
         } catch (SocketTimeoutException | UnknownHostException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
