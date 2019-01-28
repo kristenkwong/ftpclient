@@ -95,6 +95,8 @@ public class CSftp {
         } catch (IOException e) {
             System.err.println(String.format("0x38E Access to local file %s denied.", fileName));
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
         handleResponse();
     }
@@ -143,6 +145,8 @@ public class CSftp {
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
     }
 
@@ -162,6 +166,8 @@ public class CSftp {
         } catch (IOException exception) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
         return;
     }
@@ -194,6 +200,9 @@ public class CSftp {
             }
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
+            return null;
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
             return null;
         }
 
@@ -244,7 +253,10 @@ public class CSftp {
         } catch (IOException exception) {
             System.err.println("0xFFFD Control connection I/O error, closing control connection.");
             return "IOError";
-        } 
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
+            return "Processing Error";
+        }
     }
 
     private static void sendCommand(String command) {
@@ -336,6 +348,8 @@ public class CSftp {
             }
         } catch (IOException exception) {
             System.err.println("0xFFFE Input error while reading commands, terminating.");
+        } catch (Exception e) {
+            System.err.println(String.format("0xFFFF Processing error. %s.", e.getMessage()));
         }
     }
 }
