@@ -219,7 +219,7 @@ public class CSftp {
         } catch (SocketTimeoutException | UnknownHostException e) {
             System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
-        } catch (IOException exception) {
+        } catch (IOException e) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
         } catch (Exception e) {
@@ -303,7 +303,7 @@ public class CSftp {
 
                 while (true) {
                     System.out.println("<-- " + fromServer);
-                    if (line_num != 0 && fromServer.startsWith(responseCode))
+                    if (line_num != 0 && fromServer.startsWith(responseCode + " "))
                         break;
                     else if (fromServer.startsWith("221"))
                         exit_flag = true;
@@ -377,6 +377,7 @@ public class CSftp {
                 System.out.print("csftp> ");
                 len = System.in.read(cmdString);
                 String command = new String(cmdString).trim();
+                System.out.println(command);
 
                 cmdString = new byte[MAX_LEN]; // clear byte array after command copied
 
