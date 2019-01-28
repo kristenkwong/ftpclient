@@ -74,10 +74,10 @@ public class CSftp {
                 return;
             }
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             return;
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
             return;
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
@@ -137,9 +137,9 @@ public class CSftp {
             dataSocket.close();
             
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
+            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (IOException e) {
             System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
             System.exit(1);
