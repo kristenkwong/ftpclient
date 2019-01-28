@@ -52,45 +52,30 @@ public class CSftp {
             fileName = splitParam[splitParam.length - 1];
         }
         System.out.println(fileName);
-        Socket dataSocket = null;
-        BufferedReader dataIn = null;
-        String fromServer;
-        String response;
-        try {
-            dataSocket = new Socket(hostName, portNumber);
-            dataIn = new BufferedReader(
+        try (
+            Socket dataSocket = new Socket(hostName, portNumber);
+            BufferedReader dataIn = new BufferedReader(
                 new InputStreamReader(dataSocket.getInputStream()));
-            dataSocket.setSoTimeout(10*1000);
+        ) {
+            String fromServer;
 
-            sendCommand("TYPE I");
-            response = handleResponse();
             sendCommand("RETR " + param);
-            response = handleResponse();
-            if (response != "150") {
-                return;
-            }
-            
-        } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
-            System.exit(1);
-        } catch (UnknownHostException e) {
-            System.err.println(String.format("0x3A2 Data transfer connection to %s on port %i failed to open.", hostName, portNumber));
-            System.exit(1);
-        } catch (IOException e) {
-            System.err.println("0x3A7 Data transfer connection I/O error, closing data connection.");
-            System.exit(1);
-        }
+            handleResponse();
 
-        try {
             PrintWriter file = new PrintWriter(fileName, StandardCharsets.UTF_8);
             while ((fromServer = dataIn.readLine()) != null) {
                 System.out.println("<-- " + fromServer);
                 file.println(fromServer);
             }
             file.close();
+            
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host " + hostName);
+            System.exit(1);
         } catch (IOException e) {
-            System.err.println(String.format("0x38E Access to local file %s denied.", param));
-            return;
+            System.err.println("Couldn't get I/O for the connection to " +
+                hostName);
+            System.exit(1);
         }
         handleResponse();
     }
@@ -143,14 +128,14 @@ public class CSftp {
     private static void establishControlConnection(String hostName, int portNumber) {
         try {
             socket = new Socket(hostName, portNumber);
-            socket.setSoTimeout(20*100);
+            socket.setSoTimeout(20*1000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String fromServer;
             fromServer = in.readLine();
             System.out.println("<-- " + fromServer);
         } catch (SocketTimeoutException e) {
-            System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open - TIMEOUT.", hostName, portNumber));
+            System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
         } catch (IOException exception) {
             System.err.println(String.format("0xFFFC Control connection to %s on port %d failed to open.", hostName, portNumber));
             System.exit(1);
